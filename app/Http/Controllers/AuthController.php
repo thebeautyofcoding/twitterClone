@@ -29,7 +29,7 @@ class AuthController extends Controller
         $user->password = $request->password;
         $user->profile_pic = 'storage/avatar.png';
         $user->save();
-        dd('HALLO');
+
         $token = $user->createToken('myapptoken')->plainTextToken;
 
         return response()->json(
