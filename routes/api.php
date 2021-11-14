@@ -24,6 +24,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         FollowersController::class,
         'getFollowing',
     ]);
+
+    Route::get('/replies/{username}', [PostController::class, 'getReplies']);
     Route::post('/messages', [ChatsController::class, 'sendMessage']);
 
     Route::post('/private-messages', [

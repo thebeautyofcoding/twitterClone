@@ -28,6 +28,8 @@ class AuthController extends Controller
         $user->email = strtolower($request->email);
         $user->password = $request->password;
         $user->profile_pic = 'storage/avatar.png';
+        $user->firstname = $request->firstname;
+        $user->lastname = $request->lastname;
         $user->save();
 
         $token = $user->createToken('myapptoken')->plainTextToken;

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 use App\Http\Resources\PostResource;
+use App\Http\Resources\ReplyResource;
 use App\Http\Resources\UserResource;
 
 class PostController extends Controller
@@ -98,6 +99,7 @@ class PostController extends Controller
     public function likeOrUnlike(Request $request)
     {
         $postId = $request->postId;
+
         $user = auth()->user();
 
         $post = Post::find($postId);
@@ -112,6 +114,7 @@ class PostController extends Controller
                 'post_id' => $postId,
                 'user_id' => $user->id,
             ]);
+
             $postLike->save();
             $post->post_like = [$postLike];
             $post->post_likes_post = PostLike::where('post_id', $postId)->get();
@@ -240,5 +243,18 @@ class PostController extends Controller
             ],
             200
         );
+    }
+
+    public function getReplies(Request $request, $username)
+    {
+        $user = User::where('username', $username)->first();
+        $posts = [];
+        foreach ($user->postReplies as $rep) {
+            $posts[] = $rep->post;
+        }
+
+        return response()->json([
+            'replies' => PostResource::collection($posts),
+        ]);
     }
 }
