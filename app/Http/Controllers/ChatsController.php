@@ -18,6 +18,15 @@ use function PHPUnit\Framework\throwException;
 
 class ChatsController extends Controller
 {
+    public function checkIfUserExists(Request $request, $username)
+    {
+        $user = User::where('username', $username)->first();
+        if (!$user) {
+            return response()->json(['user' => null], 400);
+        } else {
+            return response()->json(['user' => $user], 200);
+        }
+    }
     public function createChat(Request $request)
     {
         $users = [];
@@ -39,26 +48,38 @@ class ChatsController extends Controller
                 foreach ($users as $key => $user) {
                     if ($key == 0) {
                         $chat_name = $user['username'];
-                    } else {
+                    } elseif ($key < 3) {
                         $chat_name = $chat_name . ', ' . $user['username'];
+                    } elseif ($key > 3) {
+                        $chat_name = $chat_name . '...';
                     }
                 }
-            }
-            $chat->chat_name = $chat_name;
-            $chat->isGroupChat = true;
+                $chatDb = Chat::where('chat_name', $chat_name)->first();
+                if ($chatDb) {
+                    return response()->json([
+                        'error' =>
+                            'Es existiert bereits ein Chat mit diesen Users',
+                    ]);
+                } else {
+                    $chat->creator = $chat->user_id = auth()->id();
+                    $chat->chat_name = $chat_name;
+                    $chat->isGroupChat = true;
 
-            $chat->save();
-            $latestChat = Chat::find($chat->id);
-            $latestChat->users()->attach($userIds);
+                    $chat->save();
+                    $latestChat = Chat::find($chat->id);
+                    $latestChat->users()->attach($userIds);
+                    return response()->json(['chat', $latestChat], 201);
+                }
+            }
         }
     }
 
     public function getChats()
     {
-        $userId = auth()->id();
+        $user = auth()->user();
 
-        $user = User::find($userId)->first();
         $chatsWithAuth = $user->chats;
+
         $chatWithUsers = [];
 
         foreach ($chatsWithAuth as $chat) {
@@ -123,6 +144,15 @@ class ChatsController extends Controller
             'messages' => MessageResource::collection($messages),
         ]);
     }
+    // public function getPrivateChat(Request $request)
+    // {
+    //     $chat = Chat::find($id);
+    //     $messages = $chat->messages;
+
+    //     return response()->json([
+    //         'messages' => new ChatResource($messages),
+    //     ]);
+    // }
 
     public function sendPrivateMessage(Request $request)
     {
@@ -130,28 +160,41 @@ class ChatsController extends Controller
             ->chats()
             ->where('isGroupChat', false)
             ->first();
-
+        $user = User::where('username', $request->to)->first();
         if (!$chat) {
             $chat = new Chat();
-            $chat_name = User::find($request->to);
-
-            $chat->chat_name = $chat_name->username;
+            $chat_name = $user->username;
+            $chat->creator = auth()->id();
+            $chat->chat_name = $chat_name;
             $chat->save();
-            $chat->users()->attach([auth()->id(), $request->to]);
+            $chat->users()->attach([auth()->id(), $user->id]);
             $chat->messages()->create([
                 'content' => $request->message,
                 'sender_id' => auth()->id(),
-                'user_id' => $request->to,
+                'user_id' => $user->id,
             ]);
             $chat->save();
+            $chat->save();
+            return response()->json([
+                'chat' => new ChatResource($chat),
+            ]);
         } else {
             $chat->messages()->create([
                 'content' => $request->message,
                 'sender_id' => auth()->id(),
-                'user_id' => $request->to,
+                'user_id' => $user->id,
             ]);
 
             $chat->save();
+            return response()->json([
+                'message' => new MessageResource($chat->messages->last()),
+            ]);
         }
+    }
+
+    public function getChatWithPrivateMessages(Request $request, $username)
+    {
+        $chat = new ChatResource(Chat::where('chat_name', $username)->first());
+        return response()->json(['chat' => $chat], 200);
     }
 }

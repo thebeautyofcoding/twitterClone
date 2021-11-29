@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PostResource;
 use App\Models\Post;
 
 use App\Models\User;
@@ -42,6 +43,6 @@ class SearchController extends Controller
             ->beginWithWildcard()
             ->get($keyword);
 
-        return response(['posts' => $results]);
+        return response(['posts' => PostResource::collection($results)]);
     }
 }

@@ -29,6 +29,7 @@ class PostController extends Controller
     public function index()
     {
         $posts = PostResource::collection(Post::orderBy('id', 'DESC')->get());
+
         return response()->json(['posts' => $posts]);
     }
 
@@ -139,13 +140,16 @@ class PostController extends Controller
             $postLike->delete();
 
             $post->post_likes_post = PostLike::where('post_id', $postId)->get();
-            $post->post_like_count = PostLike::where('post_id', $postId)
-                ->get()
-                ->count();
+            // $post->post_like_count = $postLikes;
+            $post->postLikes = $postLike->where('post_id', $postId)->count();
+            $post->retweetedByAuthUser = $post->retweets
+                ->where('user_id', $user->id)
+                ->first();
             $post->replies = $post->postReplies;
             $post->user_id_posted_by = $post->user;
             $post->retweet_count = $post->retweets->count();
             $post->retweet = $post->retweets;
+
             broadcast(new LikeEvent(new PostResource($post)))->toOthers();
             return response()->json(
                 ['post' => new PostResource($post), 'liked' => false],

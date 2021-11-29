@@ -17,7 +17,7 @@ class CreateChatsTable extends Migration
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->char('chat_name', 250);
+            $table->string('chat_name', 250);
             $table->boolean('isGroupChat')->default(false);
 
             // latest message

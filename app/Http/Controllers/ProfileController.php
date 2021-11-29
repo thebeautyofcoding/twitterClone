@@ -15,7 +15,9 @@ class ProfileController extends Controller
         $user = User::where('username', $username)
             ->get()
             ->first();
-
+        if (!$user) {
+            return response()->json(['user' => null], 400);
+        }
         return response()->json(['user' => new UserResource($user)], 200);
     }
 

@@ -19,4 +19,9 @@ class Chat extends Model
     {
         return $this->hasMany(Message::class)->orderBy('id', 'asc');
     }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'creator');
+    }
 }

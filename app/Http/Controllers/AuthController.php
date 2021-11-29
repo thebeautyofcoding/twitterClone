@@ -21,7 +21,29 @@ class AuthController extends Controller
             'username' => 'required',
             'email' => 'required',
             'password' => 'required|min:6',
+            'firstname' => 'required|min:3',
+            'lastname' => 'required|min:3',
         ]);
+        $userByUsername = User::where('username', $request->username)->first();
+        $userByEmail = User::where('email', $request->email)->first();
+        if ($userByUsername) {
+            return response(
+                [
+                    'username' =>
+                        'User with this username already existent in database',
+                ],
+                401
+            );
+        }
+        if ($userByEmail) {
+            return response(
+                [
+                    'email' =>
+                        'User with this email already existent in database',
+                ],
+                401
+            );
+        }
 
         $user = new User();
         $user->username = $request->username;
@@ -51,10 +73,17 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             return response(
                 [
-                    'message' => 'Bad Login',
+                    'email' => 'User with this email is non-existent',
+                ],
+                401
+            );
+        } elseif (!Hash::check($request->password, $user->password)) {
+            return response(
+                [
+                    'password' => 'Please provide the right password',
                 ],
                 401
             );

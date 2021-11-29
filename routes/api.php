@@ -27,11 +27,17 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::get('/replies/{username}', [PostController::class, 'getReplies']);
     Route::post('/messages', [ChatsController::class, 'sendMessage']);
+    Route::get('/private-messages/{username}', [
+        ChatsController::class,
+        'getChatWithPrivateMessages',
+    ]);
 
     Route::post('/private-messages', [
         ChatsController::class,
         'sendPrivateMessage',
     ]);
+
+    Route::get('/private-messages', [ChatsController::class, 'getPrivateChat']);
     Route::get('/messages/chat/{id}', [
         ChatsController::class,
         'getMessagesByChatId',
